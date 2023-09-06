@@ -2,10 +2,12 @@
 const { GridFSBucketReadStream } = require("mongodb");
 const Product = require("../models/productModel");
 const ErrorHandler = require("../utils/errorhandler");
-const catchAsyncErrors = require("../middleware/catchAsyncErrors")
+const catchAsyncErrors = require("../middleware/catchAsyncErrors");
+const ApiFeatures = require("../utils/apifeatures");
 //create product -- Admin
 
 exports.createProduct = catchAsyncErrors(async (req,res,next) =>{
+    req.body.user = req.user.id
     const product = await Product.create(req.body);
     res.status(201).json({
         success:true,
@@ -17,8 +19,10 @@ exports.createProduct = catchAsyncErrors(async (req,res,next) =>{
 //Gett all products
 
 exports.getAllProducts = catchAsyncErrors(async(req,res)=>{
-    const products = await Product.find();
-    
+    const productCount = await Product.countDocuments();
+    const apiFeature = new ApiFeatures(Product.find(),req.query).search().filter().pagintaion(10);
+    const products = await apiFeature.query;
+
     res.status(200).json({
         success:true,
         products
@@ -35,8 +39,9 @@ exports.getAllProductDetails = catchAsyncErrors(async(req,res,next)=>{
 
     res.status(200).json({
         success:true,
-        product
-    })
+        product,
+        productCount,
+    });
 });
 
 
